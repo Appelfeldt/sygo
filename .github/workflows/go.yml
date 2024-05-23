@@ -5,15 +5,18 @@ name: Go
 
 on:
   push:
-    branches:
-      - release/*
-  pull_request:
-    branches: [ "main" ]
-  workflow_dispatch:
+    tags:
+      - '*'
+  # push:
+  #   branches:
+  #     - main
+  # pull_request:
+  #   branches: [ "main" ]
+  # workflow_dispatch:
 
 jobs:
 
-  build-ubuntu:
+  build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -23,24 +26,27 @@ jobs:
       with:
         go-version: '1.22.2'
 
-    - name: Build
-      run: go build -ldflags "-X 'github.com/Appelfeldt/steganography/cmd/sygo.BuildNumber=${{ github.event.release.tag_name }}'" -v ./...
-
+    - name: Build windows
+      run: env GOOS=windows GOARCH=amd64 go build -o bin/sygo.exe -ldflags "-X 'github.com/Appelfeldt/steganography/cmd/sygo.BuildNumber=${{ github.ref  }}'" -v ./...
+      
     - name: Test
       run: go test -v ./...
 
-  build-windows:
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.22.2'
-
-    - name: Build
-      run: go build -ldflags "-X 'github.com/Appelfeldt/steganography/cmd/sygo.BuildNumber=${{ github.event.release.tag_name }}'" -v ./...
-
-    - name: Test
-      run: go test -v ./...
+    - name: release
+        uses: actions/create-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          release_name: ${{ github.ref }}
+          tag_name: ${{ github.ref }}
+          body_path: ""
+    - name: upload windows artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bin/sygo.exe
+          asset_name: sygo.exe
+          asset_content_type: application/zip
