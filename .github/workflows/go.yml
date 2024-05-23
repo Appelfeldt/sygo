@@ -27,7 +27,7 @@ jobs:
         go-version: '1.22.2'
 
     - name: Build windows
-      run: env GOOS=windows GOARCH=amd64 go build -o bin/ -ldflags "-X 'github.com/Appelfeldt/steganography/cmd/sygo.BuildNumber=${{ github.ref  }}'" -v ./...
+      run: env GOOS=windows GOARCH=amd64 go build -o bin/ -ldflags "-X 'github.com/Appelfeldt/steganography/cmd/sygo.BuildNumber=${{ github.ref_name  }}'" -v ./...
       
     - name: Test
       run: go test -v ./...
@@ -38,9 +38,12 @@ jobs:
       with:
         draft: false
         prerelease: false
-        release_name: ${{ github.ref }}
+        release_name: ${{ github.ref_name }}
         tag_name: ${{ github.ref }}
         body_path: ""
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+
     - name: upload windows artifact
       uses: actions/upload-release-asset@v1
       env:
