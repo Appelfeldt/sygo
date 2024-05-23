@@ -27,7 +27,7 @@ jobs:
         go-version: '1.22.2'
 
     - name: Build windows
-      run: env GOOS=windows GOARCH=amd64 go build -o bin/sygo.exe -ldflags "-X 'github.com/Appelfeldt/steganography/cmd/sygo.BuildNumber=${{ github.ref  }}'" -v ./...
+      run: env GOOS=windows GOARCH=amd64 go build -o bin/ -ldflags "-X 'github.com/Appelfeldt/steganography/cmd/sygo.BuildNumber=${{ github.ref  }}'" -v ./...
       
     - name: Test
       run: go test -v ./...
@@ -47,6 +47,6 @@ jobs:
         GITHUB_TOKEN: ${{ github.token }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./bin/sygo.exe
+        asset_path: ./bin/steganography.exe
         asset_name: sygo.exe
         asset_content_type: application/zip
