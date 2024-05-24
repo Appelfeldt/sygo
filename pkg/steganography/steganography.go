@@ -122,28 +122,12 @@ func encode(params WorkParams, src image.Image) image.Image {
 	if payloadSize%bpc != 0 {
 		dataChnlCount++
 	}
-	fmt.Printf("Payload Size: %d\n", payloadSize)
-	fmt.Printf("Data Channel Count: %d\n", dataChnlCount)
+
 	var mask byte = 255 & (255 << bpc)
 	chnlData := make([]*byte, dataChnlCount)
-	// p := 0
-	// for p < dataChnlCount {
-	// 	i := p
-	// 	for j := 0; j < chnlCount; j++ {
-	// 		index := i*4 + chnlIndices[j]
-	// 		chnlData[p] = &img.Pix[index]
-	// 		*chnlData[i] = (*chnlData[i]) & mask
-	// 		p++
-	// 		if p >= dataChnlCount {
-	// 			break
-	// 		}
-	// 	}
-	// }
-
 	for i := range chnlData {
 		index := (i/chnlCount)*4 + chnlIndices[i%chnlCount]
 		chnlData[i] = &img.Pix[index]
-		//fmt.Printf("%d, %d, %d\n", i, i%chnlCount, (i/chnlCount)*4+chnlIndices[i%chnlCount])
 		*chnlData[i] = (*chnlData[i]) & mask
 	}
 
