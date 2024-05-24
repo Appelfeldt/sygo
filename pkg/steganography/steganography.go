@@ -2,76 +2,65 @@ package steganography
 
 import (
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"image"
 	"image/draw"
 	"image/png"
 	"os"
-	"path"
 )
 
-func LoadImage(filepath string) (image.Image, error) {
-	f, err := os.Open(filepath)
+type WorkParams struct {
+	InputPath      string
+	OutputPath     string
+	DataString     string
+	Channels       string
+	BitsPerChannel int
+}
 
+func loadImage(filepath string) image.Image {
+	f, err := os.Open(filepath)
 	if err != nil {
-		return nil, err
+		fmt.Fprintf(os.Stderr, "an error occured whilst opening file '%s':\n%v\n", filepath, err)
+		os.Exit(1)
 	}
 	defer f.Close()
 
 	img, _, err := image.Decode(f)
 	if err != nil {
-		return nil, err
-	}
-
-	return img, nil
-}
-
-func Size(filepath string) int {
-	img, err := LoadImage(filepath)
-	if err != nil {
-		fmt.Printf("Error loading image:\n %s", err)
+		fmt.Fprintf(os.Stderr, "an error occured whilst decoding image '%s':\n%v\n", filepath, err)
 		os.Exit(1)
 	}
 
-	return size(img.Bounds())
+	return img
 }
 
-func Extract(filepath string) string {
-	img, err := LoadImage(filepath)
-	if err != nil {
-		fmt.Printf("Error loading image:\n %s", err)
-		os.Exit(1)
-	}
+func Size(data string) int {
+	return len([]byte(data))*8 + 32
+}
 
-	extracted := extract(img)
+func Capacity(filepath string, bpc int, channels string) int {
+	img := loadImage(filepath)
+	return capacity(img.Bounds(), bpc, len(channels))
+}
+
+func capacity(rect image.Rectangle, bpc int, channels int) int {
+	return rect.Dx() * rect.Dy() * channels * bpc
+}
+
+func Extract(params WorkParams) string {
+	img := loadImage(params.InputPath)
+	extracted := decode(params, img)
 	return string(extracted)
 }
 
-func Embed(args ...string) {
-	img, err := LoadImage(args[0])
+func Embed(params WorkParams) {
+	img := loadImage(params.InputPath)
+
+	newImg := encode(params, img)
+
+	fi, err := os.Create(fmt.Sprintf("./%s", params.OutputPath))
 	if err != nil {
-		fmt.Printf("Error loading image:\n %s", err)
-		os.Exit(1)
-	}
-
-	data := []byte(args[1])
-
-	newImg, err := insert(data, img)
-	if err != nil {
-		fmt.Printf("Error inserting payload:\n%s", err)
-		fmt.Scanf("h")
-		os.Exit(1)
-	}
-
-	outpath := args[2]
-	if ext := path.Ext(outpath); ext == "" {
-		outpath += ".png"
-	}
-
-	fi, err := os.Create(fmt.Sprintf("./%s", outpath))
-	if err != nil {
-		fmt.Printf("Could not create file '%s.png'.\n%s", outpath, err)
+		fmt.Printf("Could not create file '%s.png'.\n%v", params.OutputPath, err)
 		fmt.Scanf("h")
 		os.Exit(1)
 	}
@@ -79,33 +68,31 @@ func Embed(args ...string) {
 
 	err = png.Encode(fi, newImg)
 	if err != nil {
-		fmt.Printf("Failed saving image to file.\n%s", err)
+		fmt.Printf("Failed saving image to file.\n%v", err)
 		fmt.Scanf("h")
 		os.Exit(1)
 	}
 
 }
 
-func size(rect image.Rectangle) int {
-	return rect.Dx() * rect.Dy() * 3
-}
-
-func insert(data []byte, src image.Image) (image.Image, error) {
+func encode(params WorkParams, src image.Image) image.Image {
+	data := []byte(params.DataString)
 	rect := src.Bounds()
-	bitspace := rect.Dx() * rect.Dy() * 3
-	bitcount := len(data)*8 + 64*8 //64*8 extra needed for uint64 header
+	cap := capacity(rect, params.BitsPerChannel, len(params.Channels))
+	payloadSize := Size(params.DataString)
 
-	if bitcount > bitspace {
-		return nil, errors.New("image too small for data payload")
+	if payloadSize > cap {
+		fmt.Fprintf(os.Stderr, "insufficient capacity(%d) for payload(%d)\n", cap, payloadSize)
+		os.Exit(1)
 	}
 
-	header := make([]byte, 8)
-	binary.BigEndian.PutUint64(header, uint64(len(data)))
+	header := make([]byte, 4)
+	binary.BigEndian.PutUint32(header, uint32(len(data)))
 	payload := append(header, data...)
 
-	bits := make([]byte, bitcount)
+	bits := make([]byte, payloadSize)
 	for i := rect.Min.X; i < len(payload); i++ {
-		for j := rect.Min.Y; j < 8; j++ {
+		for j := 0; j < 8; j++ {
 			index := (i*8 + j)
 			bits[index] = (payload[i] >> j) & 1
 		}
@@ -114,19 +101,61 @@ func insert(data []byte, src image.Image) (image.Image, error) {
 	img := image.NewRGBA(rect)
 	draw.Draw(img, img.Bounds(), src, rect.Min, draw.Src)
 
-	p := 0
-	for i := 0; i < bitcount; i++ {
-		if (p+1)%4 == 0 {
-			p++
+	bpc := params.BitsPerChannel
+
+	chnlCount := len(params.Channels)
+	chnlIndices := make([]int, chnlCount)
+	for i := 0; i < chnlCount; i++ {
+		switch string(params.Channels[i]) {
+		case "r":
+			chnlIndices[i] = 0
+		case "g":
+			chnlIndices[i] = 1
+		case "b":
+			chnlIndices[i] = 2
+		case "a":
+			chnlIndices[i] = 3
 		}
-		img.Pix[p] = img.Pix[p] | bits[i]
-		p++
 	}
 
-	return img, nil
+	dataChnlCount := payloadSize / bpc
+	if payloadSize%bpc != 0 {
+		dataChnlCount++
+	}
+	fmt.Printf("Payload Size: %d\n", payloadSize)
+	fmt.Printf("Data Channel Count: %d\n", dataChnlCount)
+	var mask byte = 255 & (255 << bpc)
+	chnlData := make([]*byte, dataChnlCount)
+	// p := 0
+	// for p < dataChnlCount {
+	// 	i := p
+	// 	for j := 0; j < chnlCount; j++ {
+	// 		index := i*4 + chnlIndices[j]
+	// 		chnlData[p] = &img.Pix[index]
+	// 		*chnlData[i] = (*chnlData[i]) & mask
+	// 		p++
+	// 		if p >= dataChnlCount {
+	// 			break
+	// 		}
+	// 	}
+	// }
+
+	for i := range chnlData {
+		index := (i/chnlCount)*4 + chnlIndices[i%chnlCount]
+		chnlData[i] = &img.Pix[index]
+		//fmt.Printf("%d, %d, %d\n", i, i%chnlCount, (i/chnlCount)*4+chnlIndices[i%chnlCount])
+		*chnlData[i] = (*chnlData[i]) & mask
+	}
+
+	for i := range bits {
+		bit := *chnlData[i/bpc] | (bits[i] << (i % bpc))
+		*chnlData[i/bpc] = bit
+	}
+
+	return img
 }
 
-func extractBytes(bits []byte) []byte {
+func decodeBytes(bits []byte) []byte {
 
 	bytecount := len(bits) / 8
 	bytebuffer := make([]byte, bytecount)
@@ -141,27 +170,50 @@ func extractBytes(bits []byte) []byte {
 	return bytebuffer
 }
 
-func extract(src image.Image) []byte {
-	rect := src.Bounds()
+func extractBitsFromImageChannels(img *image.RGBA, amount int, chnlIndices []int, params WorkParams) []byte {
+	bpc := params.BitsPerChannel
+	dataChnlCount := amount/bpc + amount%bpc
+	chnlData := make([]*byte, dataChnlCount)
+	chnlCount := len(params.Channels)
 
-	img := image.NewRGBA(rect)
-	draw.Draw(img, img.Bounds(), src, rect.Min, draw.Src)
-	pixels := len(img.Pix) / 4
-	bitcount := 3 * pixels
-	payload := make([]byte, bitcount)
-
-	for i := 0; i < pixels; i++ {
-		payload[i*3] = img.Pix[i*4]
-		payload[i*3+1] = img.Pix[i*4+1]
-		payload[i*3+2] = img.Pix[i*4+2]
+	for i := range chnlData {
+		index := (i/chnlCount)*4 + chnlIndices[i%chnlCount]
+		chnlData[i] = &img.Pix[index]
 	}
 
-	headerbits := payload[:64]
-	header := extractBytes(headerbits)
-	bytecount := binary.BigEndian.Uint64(header)
+	buffer := make([]byte, amount)
+	for i := range buffer {
+		buffer[i] = buffer[i] | ((*chnlData[i/bpc] >> (i % bpc)) & 1)
+	}
 
-	databits := payload[64 : 64+bytecount*8]
-	data := extractBytes(databits)
+	return buffer
+}
 
-	return data
+func decode(params WorkParams, src image.Image) []byte {
+	rect := src.Bounds()
+	chnlCount := len(params.Channels)
+	img := image.NewRGBA(rect)
+	draw.Draw(img, img.Bounds(), src, rect.Min, draw.Src)
+
+	chnlIndices := make([]int, chnlCount)
+	for i := 0; i < chnlCount; i++ {
+		switch string(params.Channels[i]) {
+		case "r":
+			chnlIndices[i] = 0
+		case "g":
+			chnlIndices[i] = 1
+		case "b":
+			chnlIndices[i] = 2
+		case "a":
+			chnlIndices[i] = 3
+		}
+	}
+
+	headerBits := extractBitsFromImageChannels(img, 32, chnlIndices, params)
+	headerBytes := decodeBytes(headerBits)
+	header := binary.BigEndian.Uint32(headerBytes)
+
+	dataBits := extractBitsFromImageChannels(img, int(header)*8+32, chnlIndices, params)
+	dataBytes := decodeBytes(dataBits[32:])
+	return dataBytes
 }
