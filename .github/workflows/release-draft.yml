@@ -5,11 +5,11 @@ name: release-draft
 
 on:
   push:
-     branches: [ "main" ]
+    branches: [ "main" ]
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
   workflow_dispatch:
-  
+
 jobs:
   build:
     runs-on: ubuntu-latest
