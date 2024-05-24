@@ -9,9 +9,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var extractCmd = &cobra.Command{
-	Use:   "extract",
-	Short: "Extracts data embedded in an image",
+var capCmd = &cobra.Command{
+	Use:   "capacity",
+	Short: "Calculates the storage capacity of an image",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		bpc, _ := cmd.Flags().GetInt("bits-per-channel")
@@ -26,21 +26,13 @@ var extractCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "Invalid channels value: %s", channels)
 			os.Exit(1)
 		}
-
-		params := st.WorkParams{
-			InputPath:      args[0],
-			Channels:       channels,
-			BitsPerChannel: bpc,
-		}
-
-		res := st.Extract(params)
-
-		fmt.Printf("%s\n", string(res))
+		bits := st.Capacity(args[0], bpc, channels)
+		fmt.Printf("%d bits\n", bits)
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(extractCmd)
-	extractCmd.PersistentFlags().Int("bits-per-channel", 1, "Amount of bits used for embedding data per pixel, per channel. Expects value 1-8")
-	extractCmd.PersistentFlags().String("channels", "rgb", "Which color channels to use for embedding. Expects strings such as 'rgba', 'rba' or 'gb'")
+	rootCmd.AddCommand(capCmd)
+	capCmd.PersistentFlags().Int("bits-per-channel", 1, "Amount of bits used for embedding data per pixel, per channel. Expects value 1-8")
+	capCmd.PersistentFlags().String("channels", "rgb", "Which color channels to use for embedding. Expects strings such as 'rgba', 'rba' or 'gb'")
 }

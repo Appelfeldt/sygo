@@ -9,7 +9,7 @@ import (
 
 var sizeCmd = &cobra.Command{
 	Use:   "size",
-	Short: "Returns amount of bits available for storage in an image",
+	Short: "Calculates a strings size when embedded",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		bits := st.Size(args[0])

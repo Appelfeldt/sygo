@@ -7,11 +7,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var BuildNumber string
+var BuildVersion string
 
 var rootCmd = &cobra.Command{
 	Use:     "sygo",
-	Version: BuildNumber,
+	Version: BuildVersion,
 	Short:   "sygo - A basic steganography tool",
 	Long:    "sygo is a steganography CLI tool\n\nIt can be used to embed data into an image and extract data embedded in an image",
 	Run: func(cmd *cobra.Command, args []string) {
