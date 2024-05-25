@@ -10,9 +10,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var embedCmd = &cobra.Command{
-	Use:   "embed",
-	Short: "Embeds data in an image",
+var encodeCmd = &cobra.Command{
+	Use:   "encode",
+	Short: "Encodes data into an image",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		outpath, _ := cmd.Flags().GetString("out")
@@ -41,13 +41,13 @@ var embedCmd = &cobra.Command{
 			BitsPerChannel: bpc,
 		}
 
-		st.Embed(params)
+		st.Encode(params)
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(embedCmd)
-	embedCmd.PersistentFlags().String("out", "embedded.png", "Output filepath")
-	embedCmd.PersistentFlags().Int("bits-per-channel", 1, "How many least-significant-bits to use per channel for data encoding")
-	embedCmd.PersistentFlags().String("channels", "rgb", "Which color channels to use for embedding. Examples: 'rgba', 'rba' or 'gb'")
+	rootCmd.AddCommand(encodeCmd)
+	encodeCmd.PersistentFlags().String("out", "encoded.png", "Output filepath")
+	encodeCmd.PersistentFlags().Int("bits-per-channel", 1, "How many least-significant-bits to use per channel for data encoding")
+	encodeCmd.PersistentFlags().String("channels", "rgb", "Which color channels to use for data encoding. Examples: 'rgba', 'rba' or 'gb'")
 }
