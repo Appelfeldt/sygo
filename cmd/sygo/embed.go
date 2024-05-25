@@ -48,6 +48,6 @@ var embedCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(embedCmd)
 	embedCmd.PersistentFlags().String("out", "embedded.png", "Output filepath")
-	embedCmd.PersistentFlags().Int("bits-per-channel", 1, "Amount of bits used for embedding data per pixel, per channel. Expects value 1-8")
-	embedCmd.PersistentFlags().String("channels", "rgb", "Which color channels to use for embedding. Expects strings such as 'rgba', 'rba' or 'gb'")
+	embedCmd.PersistentFlags().Int("bits-per-channel", 1, "How many least-significant-bits to use per channel for data encoding")
+	embedCmd.PersistentFlags().String("channels", "rgb", "Which color channels to use for embedding. Examples: 'rgba', 'rba' or 'gb'")
 }
