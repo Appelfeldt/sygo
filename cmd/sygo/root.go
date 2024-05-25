@@ -13,7 +13,7 @@ var rootCmd = &cobra.Command{
 	Use:     "sygo",
 	Version: BuildVersion,
 	Short:   "sygo - A basic steganography tool",
-	Long:    "sygo is a steganography CLI tool\n\nIt can be used to embed data into an image and extract data embedded in an image",
+	Long:    "sygo is a steganography CLI tool\n\nIt can be used to encode data into an image and decode data encoded in an image",
 	Run: func(cmd *cobra.Command, args []string) {
 
 	},
