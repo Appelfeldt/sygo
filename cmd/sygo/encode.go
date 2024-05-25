@@ -15,7 +15,7 @@ var encodeCmd = &cobra.Command{
 	Short: "Encodes data into an image",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		outpath, _ := cmd.Flags().GetString("out")
+		outpath, _ := cmd.Flags().GetString("output")
 		if ext := path.Ext(outpath); ext == "" {
 			outpath += ".png"
 		}
