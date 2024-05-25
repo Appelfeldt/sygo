@@ -38,5 +38,5 @@ Calculates the payload size to encode, resulting from the given data string and 
 
 ## Limitations/Caveats
 
-- Have only been tested on .png files
+- Has only been tested on .png files
 - Only supports 8bit color channels.
