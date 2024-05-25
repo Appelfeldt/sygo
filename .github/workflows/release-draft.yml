@@ -9,7 +9,7 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
-  build-and-test:
+  create-release-draft:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -23,24 +23,6 @@ jobs:
 
     - name: Test
       run: go test -v ./...
-
-    - name: Upload binary
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ github.sha }}-sygo-binary
-        path: ./bin/sygo.exe
-        retention-days: 1
-
-  create-draft:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    steps:
-    - name: Download sygo binary
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ github.sha }}-sygo-binary
-        run-id: ${{ github.event.workflow_run.id }}
-        github-token: ${{ secrets.GITHUB_TOKEN }}
         
     - name: release
       uses: actions/create-release@v1
