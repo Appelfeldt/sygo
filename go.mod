@@ -1,4 +1,4 @@
-module github.com/Appelfeldt/steganography
+module github.com/Appelfeldt/sygo
 
 go 1.22.2
 

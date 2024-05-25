@@ -1,6 +1,3 @@
-# This workflow will build a golang project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
-
 name: build
 
 on:
@@ -29,7 +26,7 @@ jobs:
         go-version: '1.22.2'
 
     - name: Build windows
-      run: env GOOS=windows GOARCH=amd64 go build -o bin/ -ldflags "-X 'github.com/Appelfeldt/steganography/cmd/sygo.BuildVersion=${{ github.ref }}'" -v ./...
+      run: env GOOS=windows GOARCH=amd64 go build -o bin/ -ldflags "-X 'github.com/Appelfeldt/sygo/cmd/sygo.BuildVersion=${{ github.ref }}'" -v ./...
 
     - name: Test
       run: go test -v ./...

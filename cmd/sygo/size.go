@@ -3,7 +3,7 @@ package sygo
 import (
 	"fmt"
 
-	st "github.com/Appelfeldt/steganography/pkg/steganography"
+	st "github.com/Appelfeldt/sygo/pkg/steganography"
 	"github.com/spf13/cobra"
 )
 
