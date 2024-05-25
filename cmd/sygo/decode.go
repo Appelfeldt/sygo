@@ -9,9 +9,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var extractCmd = &cobra.Command{
-	Use:   "extract",
-	Short: "Extracts data embedded in an image",
+var decodeCmd = &cobra.Command{
+	Use:   "decode",
+	Short: "Decodes data encoded in an image",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		bpc, _ := cmd.Flags().GetInt("bits-per-channel")
@@ -33,14 +33,14 @@ var extractCmd = &cobra.Command{
 			BitsPerChannel: bpc,
 		}
 
-		res := st.Extract(params)
+		res := st.Decode(params)
 
 		fmt.Printf("%s\n", string(res))
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(extractCmd)
-	extractCmd.PersistentFlags().Int("bits-per-channel", 1, "Amount of bits used for embedding data per pixel, per channel. Expects value 1-8")
-	extractCmd.PersistentFlags().String("channels", "rgb", "Which color channels to use for embedding. Expects strings such as 'rgba', 'rba' or 'gb'")
+	rootCmd.AddCommand(decodeCmd)
+	decodeCmd.PersistentFlags().Int("bits-per-channel", 1, "How many least-significant-bits to read per channel when decoding")
+	decodeCmd.PersistentFlags().String("channels", "rgb", "Which color channels to read when decoding. Examples: 'rgba', 'rba' or 'gb'")
 }

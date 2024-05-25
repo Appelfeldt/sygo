@@ -47,13 +47,42 @@ func capacity(rect image.Rectangle, bpc int, channels int) int {
 	return rect.Dx() * rect.Dy() * channels * bpc
 }
 
-func Extract(params WorkParams) string {
+func Decode(params WorkParams) string {
 	img := loadImage(params.InputPath)
 	extracted := decode(params, img)
 	return string(extracted)
 }
 
-func Embed(params WorkParams) {
+func decode(params WorkParams, src image.Image) []byte {
+	rect := src.Bounds()
+	chnlCount := len(params.Channels)
+	img := image.NewRGBA(rect)
+	draw.Draw(img, img.Bounds(), src, rect.Min, draw.Src)
+
+	chnlIndices := make([]int, chnlCount)
+	for i := 0; i < chnlCount; i++ {
+		switch string(params.Channels[i]) {
+		case "r":
+			chnlIndices[i] = 0
+		case "g":
+			chnlIndices[i] = 1
+		case "b":
+			chnlIndices[i] = 2
+		case "a":
+			chnlIndices[i] = 3
+		}
+	}
+
+	headerBits := extractBitsFromImageChannels(img, 32, chnlIndices, params)
+	headerBytes := decodeBytes(headerBits)
+	header := binary.BigEndian.Uint32(headerBytes)
+
+	dataBits := extractBitsFromImageChannels(img, int(header)*8+32, chnlIndices, params)
+	dataBytes := decodeBytes(dataBits[32:])
+	return dataBytes
+}
+
+func Encode(params WorkParams) {
 	img := loadImage(params.InputPath)
 
 	newImg := encode(params, img)
@@ -171,33 +200,4 @@ func extractBitsFromImageChannels(img *image.RGBA, amount int, chnlIndices []int
 	}
 
 	return buffer
-}
-
-func decode(params WorkParams, src image.Image) []byte {
-	rect := src.Bounds()
-	chnlCount := len(params.Channels)
-	img := image.NewRGBA(rect)
-	draw.Draw(img, img.Bounds(), src, rect.Min, draw.Src)
-
-	chnlIndices := make([]int, chnlCount)
-	for i := 0; i < chnlCount; i++ {
-		switch string(params.Channels[i]) {
-		case "r":
-			chnlIndices[i] = 0
-		case "g":
-			chnlIndices[i] = 1
-		case "b":
-			chnlIndices[i] = 2
-		case "a":
-			chnlIndices[i] = 3
-		}
-	}
-
-	headerBits := extractBitsFromImageChannels(img, 32, chnlIndices, params)
-	headerBytes := decodeBytes(headerBits)
-	header := binary.BigEndian.Uint32(headerBytes)
-
-	dataBits := extractBitsFromImageChannels(img, int(header)*8+32, chnlIndices, params)
-	dataBytes := decodeBytes(dataBits[32:])
-	return dataBytes
 }
