@@ -5,11 +5,20 @@ name: build
 
 on:
   pull_request:
-     branches: [ "main" ]
-  workflow_dispatch:
+    branches:
+      - "main"
+    paths:
+    - '.github/**'
+    - '**.go'
+    - 'go.mod'
+    - 'go.sum'
+    
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -20,14 +29,7 @@ jobs:
         go-version: '1.22.2'
 
     - name: Build windows
-      run: env GOOS=windows GOARCH=amd64 go build -o bin/ -ldflags "-X 'github.com/Appelfeldt/steganography/cmd/sygo.BuildVersion=${{ github.ref_name  }}'" -v ./...
-      
+      run: env GOOS=windows GOARCH=amd64 go build -o bin/ -ldflags "-X 'github.com/Appelfeldt/steganography/cmd/sygo.BuildVersion=${{ github.ref }}'" -v ./...
+
     - name: Test
       run: go test -v ./...
-      
-    - name: Upload binary
-      uses: actions/upload-artifact@v4
-      with:
-        name: sygo-binary
-        path: ./bin/steganography.exe
-        retention-days: 5
