@@ -47,7 +47,7 @@ var encodeCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(encodeCmd)
-	encodeCmd.PersistentFlags().String("out", "encoded.png", "Output filepath")
+	encodeCmd.PersistentFlags().String("output", "encoded.png", "Output filepath")
 	encodeCmd.PersistentFlags().Int("bits-per-channel", 1, "How many least-significant-bits to use per channel for data encoding")
 	encodeCmd.PersistentFlags().String("channels", "rgb", "Which color channels to use for data encoding. Examples: 'rgba', 'rba' or 'gb'")
 }
